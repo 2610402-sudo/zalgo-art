@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zalgo Text Art Generator - 그림이 비치는 잘고 글</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-color: #212529;
+      --text-muted: #6c757d;
+      --border-color: #dee2e6;
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --accent-color: #06b6d4;
+      --output-bg: #1e1e2e;
+      --output-text: #cdd6f4;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --text-color: #f1f3f5;
+        --text-muted: #adb5bd;
+        --border-color: #333333;
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --output-bg: #0d0e15;
+        --output-text: #cdd6f4;
+        --shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.3rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 992px) {
+      .main-grid {
+        grid-template-columns: 380px 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1fr solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    label .value-badge {
+      font-size: 0.8rem;
+      font-weight: normal;
+      color: var(--primary-color);
+      background: rgba(99, 102, 241, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: inherit;
+      resize: vertical;
+      font-size: 0.9rem;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-upload-btn, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .file-upload-btn:hover, .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .file-upload-btn:active, .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-color);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary-color);
+    }
+
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-size: 0.88rem;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .preview-canvas-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.2rem;
+    }
+
+    canvas#imageCanvas {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border: 1px dashed var(--border-color);
+      border-radius: 4px;
+      background: #eee;
+    }
+
+    .output-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: 100%;
+      min-height: 500px;
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .output-area {
+      flex: 1;
+      background-color: var(--output-bg);
+      color: var(--output-text);
+      border-radius: 8px;
+      padding: 2.5rem 1.5rem;
+      overflow-x: auto;
+      overflow-y: auto;
+      white-space: pre;
+      font-size: 0.95rem;
+      border: 1px solid var(--border-color);
+      max-height: 700px;
+      position: relative;
+    }
+
+    /* 한글 폰트 Fallback 보장 */
+    .font-malgun { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", "Arial Unicode MS", sans-serif; }
+    .font-segoe { font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    .font-arial { font-family: "Arial Unicode MS", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+    .font-noto { font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+    .font-nanum { font-family: "NanumGothic", "Malgun Gothic", sans-serif; }
+    .font-batang { font-family: "Batang", "Gungsuh", serif; }
+    .font-mono { font-family: "Courier New", monospace, "Malgun Gothic"; }
+
+    .placeholder-msg {
+      color: #6c7086;
+      text-align: center;
+      padding: 4rem 1rem;
+      white-space: normal;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>그림이 비치는 잘고(Zalgo) 글 생성기</h1>
+    <p>글을 입력하고 이미지를 더해, 텍스트 속에 그림의 실루엣을 표현해 보세요.</p>
+  </header>
+
+  <div class="main-grid">
+    <!-- 설정 제어판 -->
+    <div class="card">
+      <div class="form-group">
+        <label for="inputText">입력 글자들</label>
+        <textarea id="inputText" placeholder="여기에 텍스트를 입력하세요..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>이미지 선택</label>
+        <div class="preview-canvas-wrapper">
+          <canvas id="imageCanvas" width="60" height="60"></canvas>
+          <div style="display: flex; flex-direction: column; gap: 0.4rem; flex: 1;">
+            <label for="imageInput" class="file-upload-btn">📷 이미지 업로드</label>
+            <input type="file" id="imageInput" accept="image/*">
+            <button type="button" id="btnSample" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.3rem 0.5rem;">🎨 샘플 그림 사용</button>
+          </div>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-color);">
+
+      <!-- 옵션 조절 슬라이더들 -->
+      <div class="form-group">
+        <label for="intensitySlider">잘고 강도 <span id="intensityVal" class="value-badge">14</span></label>
+        <div class="slider-container">
+          <input type="range" id="intensitySlider" min="2" max="40" value="14">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="contrastSlider">대비 <span id="contrastVal" class="value-badge">1.5</span></label>
+        <div class="slider-container">
+          <input type="range" id="contrastSlider" min="0.5" max="3.0" step="0.1" value="1.5">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="autoColsCheck" checked> 줄 길이(칸 수) 자동 계산
+        </label>
+      </div>
+
+      <div class="form-group" id="manualColsGroup" style="display: none;">
+        <label for="colsSlider">줄당 칸 수 <span id="colsVal" class="value-badge">60</span></label>
+        <div class="slider-container">
+          <input type="range" id="colsSlider" min="20" max="160" value="60">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="fontSelect">출력 폰트</label>
+        <select id="fontSelect">
+          <option value="font-malgun" selected>맑은 고딕 (Malgun Gothic)</option>
+          <option value="font-segoe">Segoe UI</option>
+          <option value="font-arial">Arial Unicode MS</option>
+          <option value="font-noto">Noto Sans KR</option>
+          <option value="font-nanum">나눔고딕</option>
+          <option value="font-batang">바탕 (Batang)</option>
+          <option value="font-mono">고정폭 (Monospace)</option>
+        </select>
+      </div>
+
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="ignoreNewlineCheck" checked> 줄바꿈 무시
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="invertCheck"> 음영 반전
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="classicNoiseCheck"> 클래식 노이즈
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="spaceGlitchCheck"> 공백에도 적용
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="colorModeCheck"> 컬러 모드
+        </label>
+      </div>
+    </div>
+
+    <!-- 결과 출력 영역 -->
+    <div class="card output-card">
+      <div class="output-header">
+        <span style="font-weight: 600; font-size: 1rem;">결과 아스키/잘고 텍스트</span>
+        <div class="btn-group">
+          <button id="btnCopy" class="btn">📋 복사</button>
+          <button id="btnSaveTxt" class="btn btn-secondary">💾 TXT 저장</button>
+          <button id="btnSavePng" class="btn btn-secondary">🖼️ PNG 저장</button>
+        </div>
+      </div>
+
+      <div id="outputArea" class="output-area font-malgun">
+        <div class="placeholder-msg">텍스트와 이미지를 준비하면 여기에 글리치 아트가 생성됩니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">복사되었습니다!</div>
+
+<script>
+// --- 유니코드 결합 기호 세트 정의 ---
+const ZALGO_SETS = {
+  classic: {
+    up: [
+      0x0300,0x0301,0x0302,0x0303,0x0304,0x0305,0x0306,0x0307,0x0308,0x0309,0x030A,0x030B,0x030C,0x030D,0x030E,0x030F,
+      0x0310,0x0311,0x0312,0x0313,0x0314,0x033D,0x033E,0x033F,0x0342,0x0343,0x0344,0x034A,0x034B,0x034C,0x0350,0x0351,
+      0x0352,0x0357,0x035B,0x0363,0x0364,0x0365,0x0366,0x0367,0x0368,0x0369,0x036A,0x036B,0x036C,0x036D,0x036E,0x036F
+    ],
+    down: [
+      0x0316,0x0317,0x0318,0x0319,0x031C,0x031D,0x031E,0x031F,0x0320,0x0323,0x0324,0x0325,0x0326,0x0329,0x032A,0x032B,
+      0x032C,0x032D,0x032E,0x032F,0x0330,0x0331,0x0332,0x0333,0x0339,0x033A,0x033B,0x033C,0x0345,0x0347,0x0348,0x0349,
+      0x034D,0x034E,0x0353,0x0354,0x0355,0x0356,0x0359,0x035A
+    ],
+    mid: [
+      0x0315,0x031B,0x0321,0x0322,0x0327,0x0328,0x0334,0x0335,0x0336,0x0337,0x0338,0x0340,0x0341,0x0358,0x035C,0x035D,
+      0x035E,0x035F,0x0360,0x0361,0x0362,0x0489
+    ]
+  },
+  mild: {
+    up: [0x0300,0x0301,0x0303,0x0304,0x0306,0x0307,0x0308,0x030A,0x030C,0x0351,0x0357],
+    down: [0x0316,0x0317,0x0318,0x0319,0x031C,0x0320,0x0323,0x0324,0x0325,0x0330],
+    mid: [0x0315,0x031B,0x0321,0x0322,0x0327,0x0328] // 취소선 계열(0334~0338) 제의
+  }
+};
+
+// --- Mulberry32 난수 생성기 ---
+function mulberry32(seed) {
+  return function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+}
+
+// 기본 샘플 텍스트 (길이 확보)
+const DEFAULT_TEXT = `동해 물과 백두산이 마르고 닳도록 하느님이 보우하사 우리나라 만세. 무궁화 삼천리 화려 강산 대한 사람 대한으로 길이 보전하세. 남산 위에 저 소나무 철갑을 두른 듯 바람 서리 불변함은 우리 기상일세. 가을 하늘 공활한데 높고 구름 없이 밝은 달은 우리 가슴 일편단심일세. 이 기상과 이 마음으로 충성을 다하여 괴로우나 즐거우나 나라 사랑하세.
+
+Vibe Coding and Zalgo Art text layout rendering system. Transcending conventional text shapes through combining unicode characters mapped onto image luminance structures. Transform your plain paragraphs into expressive silhouettes directly encoded inside unicode glyph streams.
+
+생각하는 대로 코딩하고 글자 속에 형상을 담아냅니다. 어두운 픽셀 영역일수록 유니코드 결합 기호가 수직 방향으로 중첩되어 무성한 그늘과 질감을 만들어냅니다. 고정된 이미지 파일 없이 100% 복사 및 전송이 가능한 순수 텍스트 형태의 비주얼 아트를 경험해 보세요.`;
+
+// 상태 변수
+let currentImg = null;
+let currentImgColorData = null; // 컬러 모드용 픽셀 데이터
+let debounceTimer = null;
+
+// DOM 요소 참조
+const inputText = document.getElementById('inputText');
+const imageInput = document.getElementById('imageInput');
+const btnSample = document.getElementById('btnSample');
+const imageCanvas = document.getElementById('imageCanvas');
+const ctx = imageCanvas.getContext('2d');
+const outputArea = document.getElementById('outputArea');
+
+const intensitySlider = document.getElementById('intensitySlider');
+const intensityVal = document.getElementById('intensityVal');
+const contrastSlider = document.getElementById('contrastSlider');
+const contrastVal = document.getElementById('contrastVal');
+
+const autoColsCheck = document.getElementById('autoColsCheck');
+const manualColsGroup = document.getElementById('manualColsGroup');
+const colsSlider = document.getElementById('colsSlider');
+const colsVal = document.getElementById('colsVal');
+
+const fontSelect = document.getElementById('fontSelect');
+const ignoreNewlineCheck = document.getElementById('ignoreNewlineCheck');
+const invertCheck = document.getElementById('invertCheck');
+const classicNoiseCheck = document.getElementById('classicNoiseCheck');
+const spaceGlitchCheck = document.getElementById('spaceGlitchCheck');
+const colorModeCheck = document.getElementById('colorModeCheck');
+
+const btnCopy = document.getElementById('btnCopy');
+const btnSaveTxt = document.getElementById('btnSaveTxt');
+const btnSavePng = document.getElementById('btnSavePng');
+const toast = document.getElementById('toast');
+
+// 초기화
+window.addEventListener('DOMContentLoaded', () => {
+  inputText.value = DEFAULT_TEXT;
+  drawSampleImage();
+  setupEventListeners();
+  render();
+});
+
+// 샘플 원형 그라데이션 이미지 생성
+function drawSampleImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  const cCtx = canvas.getContext('2d');
+
+  cCtx.fillStyle = '#ffffff';
+  cCtx.fillRect(0, 0, 200, 200);
+
+  // 중앙 그래디언트 원
+  const grad = cCtx.createRadialGradient(100, 100, 10, 100, 100, 90);
+  grad.addColorStop(0, '#000000');
+  grad.addColorStop(0.5, '#555555');
+  grad.addColorStop(1, '#ffffff');
+
+  cCtx.fillStyle = grad;
+  cCtx.beginPath();
+  cCtx.arc(100, 100, 85, 0, Math.PI * 2);
+  cCtx.fill();
+
+  const img = new Image();
+  img.src = canvas.toDataURL();
+  img.onload = () => {
+    currentImg = img;
+    updatePreviewCanvas();
+    render();
+  };
+}
+
+// 캔버스 썸네일 업데이트
+function updatePreviewCanvas() {
+  if (!currentImg) return;
+  ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+  ctx.drawImage(currentImg, 0, 0, imageCanvas.width, imageCanvas.height);
+}
+
+// 이벤트 리스너 등록
+function setupEventListeners() {
+  const triggerRender = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(render, 200);
+  };
+
+  inputText.addEventListener('input', triggerRender);
+
+  imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          currentImg = img;
+          updatePreviewCanvas();
+          render();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  btnSample.addEventListener('click', () => {
+    drawSampleImage();
+  });
+
+  intensitySlider.addEventListener('input', (e) => {
+    intensityVal.textContent = e.target.value;
+    triggerRender();
+  });
+
+  contrastSlider.addEventListener('input', (e) => {
+    contrastVal.textContent = parseFloat(e.target.value).toFixed(1);
+    triggerRender();
+  });
+
+  colsSlider.addEventListener('input', (e) => {
+    colsVal.textContent = e.target.value;
+    triggerRender();
+  });
+
+  autoColsCheck.addEventListener('change', () => {
+    manualColsGroup.style.display = autoColsCheck.checked ? 'none' : 'flex';
+    render();
+  });
+
+  fontSelect.addEventListener('change', () => {
+    outputArea.className = 'output-area ' + fontSelect.value;
+  });
+
+  [ignoreNewlineCheck, invertCheck, classicNoiseCheck, spaceGlitchCheck, colorModeCheck].forEach(chk => {
+    chk.addEventListener('change', render);
+  });
+
+  btnCopy.addEventListener('click', copyToClipboard);
+  btnSaveTxt.addEventListener('click', saveAsTxt);
+  btnSavePng.addEventListener('click', saveAsPng);
+}
+
+// 전각 문자(2칸) 및 한글 CJK 문자 폭 계산
+function getCharWidth(ch) {
+  const code = ch.codePointAt(0);
+  // CJK & Fullwidth 범위
+  if ((code >= 0x1100 && code <= 0x11FF) ||
+      (code >= 0x2E80 && code <= 0xA4CF) ||
+      (code >= 0xAC00 && code <= 0xD7A3) ||
+      (code >= 0xF900 && code <= 0xFAFF) ||
+      (code >= 0xFE30 && code <= 0xFE4F) ||
+      (code >= 0xFF00 && code <= 0xFFEF)) {
+    return 2;
+  }
+  return 1;
+}
+
+// 문자열을 유니코드 이모지/서로게이트 안전하게 분할
+function stringToCharUnits(str) {
+  const normalized = str.normalize('NFC');
+  return [...normalized];
+}
+
+// 메인 렌더링 로직
+function render() {
+  const rawText = inputText.value;
+  if (!rawText.trim()) {
+    outputArea.innerHTML = '<div class="placeholder-msg">입력된 글이 없습니다. 글을 입력해 주세요.</div>';
+    return;
+  }
+
+  if (!currentImg) return;
+
+  const ignoreNewline = ignoreNewlineCheck.checked;
+  const processedText = ignoreNewline ? rawText.replace(/\r?\n/g, ' ') : rawText;
+  const chars = stringToCharUnits(processedText);
+
+  // 1. 총 칸 수 계산
+  let totalCellUnits = 0;
+  for (const c of chars) {
+    if (c === '\n') continue;
+    totalCellUnits += getCharWidth(c);
+  }
+
+  if (totalCellUnits === 0) return;
+
+  // 2. cols & rows 격자 크기 결정
+  const imgWidth = currentImg.naturalWidth || 200;
+  const imgHeight = currentImg.naturalHeight || 200;
+  const imgAspect = imgWidth / imgHeight;
+
+  let cols;
+  if (autoColsCheck.checked) {
+    cols = Math.round(Math.sqrt(2.1 * totalCellUnits * imgAspect));
+    cols = Math.max(20, Math.min(160, cols));
+  } else {
+    cols = parseInt(colsSlider.value, 10);
+  }
+
+  // 3. 글자를 격자 줄로 나누기
+  const lines = [];
+  let currentLine = [];
+  let currentLineWidth = 0;
+
+  for (const c of chars) {
+    if (c === '\n') {
+      lines.push(currentLine);
+      currentLine = [];
+      currentLineWidth = 0;
+      continue;
+    }
+
+    const w = getCharWidth(c);
+    if (currentLineWidth + w > cols) {
+      lines.push(currentLine);
+      currentLine = [{ char: c, width: w, startCol: 0 }];
+      currentLineWidth = w;
+    } else {
+      currentLine.push({ char: c, width: w, startCol: currentLineWidth });
+      currentLineWidth += w;
+    }
+  }
+  if (currentLine.length > 0) {
+    lines.push(currentLine);
+  }
+
+  const rows = lines.length;
+
+  // 4. 이미지 픽셀 매핑 canvas 조율 (cols × rows)
+  const mapCanvas = document.createElement('canvas');
+  mapCanvas.width = cols;
+  mapCanvas.height = rows;
+  const mapCtx = mapCanvas.getContext('2d');
+
+  mapCtx.fillStyle = '#ffffff';
+  mapCtx.fillRect(0, 0, cols, rows);
+  mapCtx.drawImage(currentImg, 0, 0, cols, rows);
+
+  const imgData = mapCtx.getImageData(0, 0, cols, rows);
+  const data = imgData.data;
+
+  // 밝기 추출 및 최소/최대 밝기 측정
+  const luminances = new Float32Array(cols * rows);
+  let minLum = 1.0;
+  let maxLum = 0.0;
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const idx = (y * cols + x) * 4;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      const a = data[idx + 3] / 255;
+
+      // 투명 배경은 흰색 처리
+      const finalR = r * a + 255 * (1 - a);
+      const finalG = g * a + 255 * (1 - a);
+      const finalB = b * a + 255 * (1 - a);
+
+      const lum = (0.299 * finalR + 0.587 * finalG + 0.114 * finalB) / 255.0;
+      const pos = y * cols + x;
+      luminances[pos] = lum;
+
+      if (lum < minLum) minLum = lum;
+      if (lum > maxLum) maxLum = lum;
+    }
+  }
+
+  // 5. 파라미터 준비
+  const contrast = parseFloat(contrastSlider.value);
+  const intensity = parseInt(intensitySlider.value, 10);
+  const isClassic = classicNoiseCheck.checked;
+  const isInverted = invertCheck.checked;
+  const isSpaceGlitch = spaceGlitchCheck.checked;
+  const isColorMode = colorModeCheck.checked;
+  const zalgoSet = isClassic ? ZALGO_SETS.classic : ZALGO_SETS.mild;
+
+  const rng = mulberry32(12345); // 고정 시드
+
+  // 줄 간격 계산 (기호 누적 대비)
+  const lineHeight = 1.7 + Math.min(intensity, 12) * 0.13;
+  outputArea.style.lineHeight = lineHeight.toString();
+
+  let finalHTML = '';
+  let plainTextResult = '';
+
+  for (let r = 0; r < rows; r++) {
+    const line = lines[r];
+    for (const item of line) {
+      const char = item.char;
+      const midX = Math.min(cols - 1, Math.floor(item.startCol + item.width / 2));
+      const pixelIdx = r * cols + midX;
+
+      let rawLum = luminances[pixelIdx];
+
+      // 레벨 자동 보정
+      if (maxLum > minLum) {
+        rawLum = (rawLum - minLum) / (maxLum - minLum);
+      }
+
+      // 대비 조정
+      let b = (rawLum - 0.5) * contrast + 0.5;
+      b = Math.max(0, Math.min(1, b));
+
+      // 어둡기 계산
+      let darkness = 1.0 - b;
+      if (isInverted) darkness = 1.0 - darkness;
+
+      // 글리치 결합 개수
+      const glitchCount = Math.round(darkness * intensity);
+
+      let glyph = char;
+      const isSpace = (char === ' ' || char === '\u3000');
+
+      if (!isSpace || isSpaceGlitch) {
+        for (let g = 0; g < glitchCount; g++) {
+          const rand = rng();
+          let pickList;
+          if (rand < 0.45) {
+            pickList = zalgoSet.up;
+          } else if (rand < 0.90) {
+            pickList = zalgoSet.down;
+          } else {
+            pickList = zalgoSet.mid;
+          }
+          const codePoint = pickList[Math.floor(rng() * pickList.length)];
+          glyph += String.fromCodePoint(codePoint);
+        }
+      }
+
+      plainTextResult += glyph;
+
+      if (isColorMode) {
+        const rawIdx = (r * cols + midX) * 4;
+        const cr = data[rawIdx];
+        const cg = data[rawIdx + 1];
+        const cb = data[rawIdx + 2];
+        finalHTML += `<span style="color: rgb(${cr},${cg},${cb});">${escapeHtml(glyph)}</span>`;
+      }
+    }
+    plainTextResult += '\n';
+    if (isColorMode) finalHTML += '\n';
+  }
+
+  if (isColorMode) {
+    outputArea.innerHTML = finalHTML;
+  } else {
+    outputArea.textContent = plainTextResult;
+  }
+
+  // 복사/저장용 데이터 보관
+  outputArea.dataset.plainText = plainTextResult;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// 클립보드 복사
+function copyToClipboard() {
+  const text = outputArea.dataset.plainText || outputArea.textContent;
+  if (!text) return;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(showToast).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+}
+
+function fallbackCopy() {
+  const range = document.createRange();
+  range.selectNodeContents(outputArea);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  try {
+    document.execCommand('copy');
+    showToast();
+  } catch (err) {
+    alert('복사에 실패했습니다. 수동으로 드래그하여 복사해 주세요.');
+  }
+}
+
+function showToast() {
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// TXT 파일 저장
+function saveAsTxt() {
+  const text = outputArea.dataset.plainText || outputArea.textContent;
+  if (!text) return;
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zalgo_art_${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// PNG 저장 (Canvas 렌더링)
+function saveAsPng() {
+  const text = outputArea.dataset.plainText || outputArea.textContent;
+  if (!text) return;
+
+  const lines = text.split('\n');
+  const canvas = document.createElement('canvas');
+  const pngCtx = canvas.getContext('2d');
+
+  const fontSize = 16;
+  const lineH = fontSize * parseFloat(outputArea.style.lineHeight || 2.0);
+  
+  pngCtx.font = `${fontSize}px "Malgun Gothic", sans-serif`;
+  
+  let maxWidth = 0;
+  for (const line of lines) {
+    const w = pngCtx.measureText(line).width;
+    if (w > maxWidth) maxWidth = w;
+  }
+
+  const padding = 40;
+  canvas.width = Math.max(300, maxWidth + padding * 2);
+  canvas.height = lines.length * lineH + padding * 2;
+
+  // 배경
+  pngCtx.fillStyle = '#1e1e2e';
+  pngCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 텍스트
+  pngCtx.fillStyle = '#cdd6f4';
+  pngCtx.font = `${fontSize}px "Malgun Gothic", sans-serif`;
+  pngCtx.textBaseline = 'top';
+
+  for (let i = 0; i < lines.length; i++) {
+    pngCtx.fillText(lines[i], padding, padding + i * lineH);
+  }
+
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `zalgo_art_${Date.now()}.png`;
+  a.click();
+}
+</script>
+</body>
+</html>
